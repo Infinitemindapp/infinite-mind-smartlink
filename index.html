@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Infinite Mind — Smart Link</title>
+  <meta name="description" content="Auto-redirect to the right Infinite Mind destination based on your device." />
+  <style>
+    html, body { height: 100%; margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    .wrap { display:flex; align-items:center; justify-content:center; height:100%; text-align:center; padding:24px; }
+    .card { max-width:560px; border:1px solid #eee; border-radius:16px; padding:24px; box-shadow:0 10px 24px rgba(0,0,0,0.05); }
+    .spinner { width:32px; height:32px; border:4px solid #ddd; border-top-color:#333; border-radius:50%; animation:spin 1s linear infinite; margin: 0 auto 12px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    code { background:#f5f5f7; padding:2px 6px; border-radius:6px; }
+  </style>
+  <script>
+    // ---- CONFIGURED ----
+    const IOS_APP_STORE_URL = "https://apps.apple.com/app/id1544288085";
+    const ANDROID_PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=io.infinitemind.imapp";
+    const WEBSITE_FALLBACK_URL = "https://infinitemind.io";
+    
+    function isAndroid() { return /android/i.test(navigator.userAgent || navigator.vendor || window.opera); }
+    function isIOS() { return /iPad|iPhone|iPod/.test(navigator.userAgent || navigator.vendor || window.opera) && !window.MSStream; }
+    
+    function withUtm(url) {
+      const q = window.location.search;
+      if (!q || q === "?") return url;
+      try {
+        const u = new URL(url);
+        if (q.length > 1) {
+          const incoming = new URLSearchParams(q);
+          incoming.forEach((v, k) => u.searchParams.set(k, v));
+        }
+        return u.toString();
+      } catch (e) {
+        return url + q;
+      }
+    }
+    
+    function go(url) { window.location.replace(withUtm(url)); }
+    
+    function route() {
+      const params = new URLSearchParams(window.location.search);
+      const override = (params.get("dest") || "").toLowerCase();
+      if (override === "ios") return go(IOS_APP_STORE_URL);
+      if (override === "android") return go(ANDROID_PLAY_STORE_URL);
+      if (override === "web") return go(WEBSITE_FALLBACK_URL);
+      
+      if (isAndroid()) return go(ANDROID_PLAY_STORE_URL);
+      if (isIOS()) return go(IOS_APP_STORE_URL);
+      return go(WEBSITE_FALLBACK_URL);
+    }
+    
+    document.addEventListener("DOMContentLoaded", route);
+  </script>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="spinner" aria-hidden="true"></div>
+      <h1>Taking you to Infinite Mind…</h1>
+      <p>If nothing happens, <a id="manual-link" href="#" onclick="route(); return false;">tap here</a>.</p>
+      <p style="font-size: 12px; color:#666">Tip: Add <code>?utm_source=tv&utm_medium=qr</code> to the link to track scans from your TV spot.</p>
+    </div>
+  </div>
+</body>
+</html>
