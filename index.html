@@ -3,191 +3,108 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Infinite Mind — Smart Link</title>
-  <meta name="description" content="Auto-redirect to the right Infinite Mind destination based on your device." />
+  <title>Infinite Mind — Redirect</title>
+  <meta name="description" content="Redirecting you to Infinite Mind…" />
   <style>
-    :root {
-      --border: #eee;
-      --shadow: 0 10px 24px rgba(0, 0, 0, 0.05);
-      --muted: #666;
-    }
     html, body {
-      height: 100%;
-      margin: 0;
+      height: 100%; margin: 0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:#fafafa;
     }
     .wrap {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      text-align: center;
-      padding: 24px;
-      background: #fafafa;
+      display:flex; align-items:center; justify-content:center;
+      height:100%; text-align:center; padding:24px;
     }
     .card {
-      width: 100%;
-      max-width: 560px;
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 24px;
-      box-shadow: var(--shadow);
-      background: #fff;
+      max-width:560px; width:100%;
+      border:1px solid #eee; border-radius:16px;
+      padding:24px; background:#fff;
+      box-shadow:0 10px 24px rgba(0,0,0,0.05);
     }
     .logo {
-      width: 96px;
-      height: 96px;
-      border-radius: 16px;
-      object-fit: cover;
-      display: block;
-      margin: 0 auto 16px;
+      width:120px; height:120px; object-fit:cover;
+      display:block; margin:0 auto 20px; border-radius:16px;
     }
+    .headline { font-size:1.5rem; font-weight:600; margin:8px 0 12px; }
     .spinner {
-      width: 32px;
-      height: 32px;
-      border: 4px solid #ddd;
-      border-top-color: #333;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 12px;
+      width:32px; height:32px;
+      border:4px solid #ddd; border-top-color:#333;
+      border-radius:50%; margin:12px auto 8px;
+      animation:spin 1s linear infinite;
     }
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-    .muted {
-      font-size: 12px;
-      color: var(--muted);
-    }
-    code {
-      background: #f5f5f7;
-      padding: 2px 6px;
-      border-radius: 6px;
+    @keyframes spin { to { transform:rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) {
+      .spinner { animation: none; border-top-color:#999; }
     }
     .cta {
-      display: inline-block;
-      margin-top: 8px;
-      text-decoration: none;
-      border: 1px solid #ddd;
-      padding: 8px 12px;
-      border-radius: 10px;
-      color: #333;
+      display:inline-block; margin-top:10px; text-decoration:none;
+      padding:8px 12px; border-radius:8px; border:1px solid #ddd; color:#333;
     }
-    .dest {
-      font-weight: 600;
-    }
+    .muted { color:#666; font-size:12px; margin-top:12px; }
   </style>
   <script>
-    // ====== CONFIG (defaults) ======
+    // ===== Config =====
     const IOS_APP_STORE_URL = "https://apps.apple.com/app/id1544288085";
     const ANDROID_PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=io.infinitemind.imapp";
     const WEBSITE_FALLBACK_URL = "https://infinitemind.io";
+    const IMAGE_URL = "https://infinitemind.io/image_2025-08-25_154013003"; // your image
 
-    // Use your custom image here:
-    const DEFAULT_IMAGE_URL = "https://infinitemind.io/image_2025-08-25_154013003/";
-    const DEFAULT_HEADLINE   = "Taking you to Infinite Mind…";
-    const DEFAULT_BODY       = "We’re routing you to the best destination for your device.";
+    // ===== Helpers =====
+    function isAndroid(){ return /android/i.test(navigator.userAgent||navigator.vendor||window.opera); }
+    function isIOS(){ return /iPad|iPhone|iPod/.test(navigator.userAgent||navigator.vendor||window.opera) && !window.MSStream; }
 
-    // ====== Helpers ======
-    function isAndroid() {
-      return /android/i.test(navigator.userAgent || navigator.vendor || window.opera);
-    }
-    function isIOS() {
-      return /iPad|iPhone|iPod/.test(navigator.userAgent || navigator.vendor || window.opera) && !window.MSStream;
-    }
-
-    function withUtm(url) {
+    function withUtm(url){
       const q = window.location.search;
-      if (!q || q === "?") return url;
-      try {
+      if(!q || q === "?") return url;
+      try{
         const u = new URL(url);
-        if (q.length > 1) {
-          const incoming = new URLSearchParams(q);
-          incoming.forEach((v, k) => u.searchParams.set(k, v));
-        }
+        const incoming = new URLSearchParams(q);
+        incoming.forEach((v,k)=>u.searchParams.set(k,v));
         return u.toString();
-      } catch (e) {
-        return url + q;
-      }
+      }catch{ return url + q; }
     }
 
-    function resolveDestination() {
-      const params = new URLSearchParams(window.location.search);
-      const override = (params.get("dest") || "").toLowerCase();
-      if (override === "ios") return { url: IOS_APP_STORE_URL, label: "App Store" };
-      if (override === "android") return { url: ANDROID_PLAY_STORE_URL, label: "Google Play" };
-      if (override === "web") return { url: WEBSITE_FALLBACK_URL, label: "Website" };
-      if (isAndroid()) return { url: ANDROID_PLAY_STORE_URL, label: "Google Play" };
-      if (isIOS()) return { url: IOS_APP_STORE_URL, label: "App Store" };
-      return { url: WEBSITE_FALLBACK_URL, label: "Website" };
+    function resolveDestination(){
+      const p = new URLSearchParams(location.search);
+      const override = (p.get("dest")||"").toLowerCase();
+      if(override === "ios") return IOS_APP_STORE_URL;
+      if(override === "android") return ANDROID_PLAY_STORE_URL;
+      if(override === "web") return WEBSITE_FALLBACK_URL;
+      if(isAndroid()) return ANDROID_PLAY_STORE_URL;
+      if(isIOS()) return IOS_APP_STORE_URL;
+      return WEBSITE_FALLBACK_URL;
     }
 
-    function hydrateUi() {
-      const params = new URLSearchParams(window.location.search);
-      const headline = params.get("headline") || DEFAULT_HEADLINE;
-      const body = params.get("body") || DEFAULT_BODY;
-      const img = params.get("img") || DEFAULT_IMAGE_URL;
+    function setup(){
+      // Image + alt + optional hotlink protection bypass
+      const img = document.getElementById("logo");
+      img.referrerPolicy = "no-referrer";
+      img.alt = "Infinite Mind";
+      img.src = IMAGE_URL;
+      img.onerror = () => { img.src = "https://infinitemind.io/wp-content/uploads/2023/06/cropped-favicon-512.png"; };
 
-      const dest = resolveDestination();
-      const finalUrl = withUtm(dest.url);
-
-      // Set image + text
-      const logo = document.getElementById("logo");
-      if (img) {
-        logo.src = img;
-        logo.alt = "Infinite Mind";
-        logo.style.display = "block";
-      }
-
-      document.getElementById("headline").textContent = headline;
-      document.getElementById("body").textContent = body;
-      document.getElementById("dest-name").textContent = dest.label;
-
+      // Manual link and auto-redirect
+      const finalUrl = withUtm(resolveDestination());
       const manual = document.getElementById("manual-link");
       manual.href = finalUrl;
 
-      // Countdown before redirect
-      const countdownEl = document.getElementById("countdown");
-      let s = 2;
-      countdownEl.textContent = s;
-      const t = setInterval(() => {
-        s -= 1;
-        countdownEl.textContent = s;
-        if (s <= 0) {
-          clearInterval(t);
-          window.location.replace(finalUrl);
-        }
-      }, 1000);
+      // Short delay so users see the page
+      setTimeout(()=>window.location.replace(finalUrl), 2000);
     }
 
-    document.addEventListener("DOMContentLoaded", hydrateUi);
+    document.addEventListener("DOMContentLoaded", setup);
   </script>
 </head>
 <body>
   <div class="wrap">
     <div class="card" role="status" aria-live="polite">
-      <img id="logo" class="logo" alt="" style="display:none;" />
+      <img id="logo" class="logo" src="" alt=""/>
+      <div class="headline">Almost there…</div>
       <div class="spinner" aria-hidden="true"></div>
-      <h1 id="headline">Taking you to Infinite Mind…</h1>
-      <p id="body">We’re routing you to the best destination for your device.</p>
-      <p>
-        Destination: <span class="dest" id="dest-name">…</span>
-         · Redirecting in <span id="countdown">2</span>s
-      </p>
       <a id="manual-link" class="cta" href="#">Continue now</a>
-      <p class="muted" style="margin-top:16px">
-        Tip: Add <code>?utm_source=tv&amp;utm_medium=qr</code> to track scans from your TV spot.
-      </p>
-      <noscript>
-        <p class="muted">JavaScript is disabled. Please choose your destination:</p>
-        <p>
-          <a class="cta" href="https://apps.apple.com/app/id1544288085">App Store</a>
-          <a class="cta" href="https://play.google.com/store/apps/details?id=io.infinitemind.imapp">Google Play</a>
-          <a class="cta" href="https://infinitemind.io">Website</a>
-        </p>
-      </noscript>
+      <div class="muted">If nothing happens in a couple seconds, tap “Continue now”.</div>
     </div>
   </div>
 </body>
 </html>
+
