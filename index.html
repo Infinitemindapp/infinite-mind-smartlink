@@ -22,8 +22,13 @@
       box-shadow:0 10px 24px rgba(0,0,0,0.05);
     }
     .logo {
-      width:120px; height:120px; object-fit:cover;
-      display:block; margin:0 auto 20px; border-radius:16px;
+      display:block;
+      margin:0 auto 20px;
+      max-width:100%;
+      width:240px;       /* adjust as needed */
+      height:auto;       /* let the image keep its aspect ratio */
+      object-fit:contain;
+      border-radius:12px;
     }
     .headline { font-size:1.5rem; font-weight:600; margin:8px 0 12px; }
     .spinner {
@@ -76,12 +81,12 @@
     }
 
     function setup(){
-      // Image + alt + optional hotlink protection bypass
+      // Image + fallback
       const img = document.getElementById("logo");
-      img.referrerPolicy = "no-referrer";
-      img.alt = "Infinite Mind";
       img.src = IMAGE_URL;
-      img.onerror = () => { img.src = "https://infinitemind.io/wp-content/uploads/2023/06/cropped-favicon-512.png"; };
+      img.onerror = () => { 
+        img.src = "https://infinitemind.io/wp-content/uploads/2023/06/cropped-favicon-512.png"; 
+      };
 
       // Manual link and auto-redirect
       const finalUrl = withUtm(resolveDestination());
@@ -98,7 +103,7 @@
 <body>
   <div class="wrap">
     <div class="card" role="status" aria-live="polite">
-      <img id="logo" class="logo" src="" alt=""/>
+      <img id="logo" class="logo" src="" alt="Infinite Mind Logo" referrerpolicy="no-referrer" />
       <div class="headline">Almost there…</div>
       <div class="spinner" aria-hidden="true"></div>
       <a id="manual-link" class="cta" href="#">Continue now</a>
@@ -107,4 +112,5 @@
   </div>
 </body>
 </html>
+
 
